@@ -16,14 +16,14 @@ todoListRouter.get('/todoList', checkDB, handleGetTodoList);
 todoListRouter.post(
   '/todoList',
   checkDB,
-  validate(todoListSchema(true)),
+  validate(todoListSchema),
   handleCreateTodo,
 );
 
 todoListRouter.put(
   '/todoList/:id',
   checkDB,
-  validate(todoListSchema(false)),
+  validate(todoListSchema),
   handleEditTodo,
 );
 

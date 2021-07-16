@@ -8,7 +8,11 @@ export type GetTodoListOptions = {
 export async function getTodoList(options: GetTodoListOptions = {}) {
   const { removed } = options;
 
-  return TodoListModel.find({ removed });
+  if (removed !== undefined) {
+    return TodoListModel.find({ removed });
+  } else {
+    return TodoListModel.find({});
+  }
 }
 
 export type GetTodoListReq = TReq & {
@@ -18,9 +22,9 @@ export type GetTodoListReq = TReq & {
 };
 export async function handleGetTodoList(req: GetTodoListReq, res: TRes) {
   try {
-    const { removed } = req.query;
+    const { all = false } = req.query;
 
-    const todoList = await getTodoList({ removed });
+    const todoList = await getTodoList(all ? undefined : { removed: true });
 
     Response.success(res, todoList);
   } catch (e) {
@@ -38,7 +42,7 @@ export async function handleCreateTodo(req: TReq, res: TRes) {
       category,
       removed: false,
     });
-    const updatedTodoList = await getTodoList();
+    const updatedTodoList = await getTodoList({ removed: false });
 
     Response.success(res, updatedTodoList);
   } catch (e) {
@@ -52,7 +56,7 @@ export async function handleEditTodo(req: TReq, res: TRes) {
     const { title, description, category } = req.body;
 
     await TodoListModel.findById(id).update({ title, description, category });
-    const updatedTodoList = await getTodoList();
+    const updatedTodoList = await getTodoList({ removed: false });
 
     Response.success(res, updatedTodoList);
   } catch (e) {
@@ -65,7 +69,7 @@ export async function handleRemoveTodo(req: TReq, res: TRes) {
     const { id } = req.params;
 
     await TodoListModel.findById(id).update({ removed: true });
-    const updatedTodoList = await getTodoList();
+    const updatedTodoList = await getTodoList({ removed: false });
 
     Response.success(res, updatedTodoList);
   } catch (e) {
