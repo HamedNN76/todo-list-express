@@ -1,18 +1,24 @@
+import { ITodoListModel } from './../Models/TodoListModel';
 import TodoListModel from '../Models/TodoListModel';
 import Response from '../Response';
 import { TReq, TRes } from './../types/TExpress';
+import { FilterQuery } from 'mongoose';
 
 export type GetTodoListOptions = {
   removed?: boolean;
+  category?: number;
 };
 export async function getTodoList(options: GetTodoListOptions = {}) {
-  const { removed } = options;
-
+  const { removed, category } = options;
+  const findOptions: FilterQuery<ITodoListModel> = {};
   if (removed !== undefined) {
-    return TodoListModel.find({ removed });
-  } else {
-    return TodoListModel.find({});
+    findOptions.removed = removed;
   }
+  if (category !== undefined) {
+    findOptions.category = category;
+  }
+
+  return TodoListModel.find(findOptions);
 }
 
 export type GetTodoListReq = TReq & {
@@ -22,9 +28,12 @@ export type GetTodoListReq = TReq & {
 };
 export async function handleGetTodoList(req: GetTodoListReq, res: TRes) {
   try {
-    const { all = false } = req.query;
+    const { all = false, category } = req.query;
 
-    const todoList = await getTodoList(all ? undefined : { removed: true });
+    const todoList = await getTodoList({
+      category: category ? Number(category) : undefined,
+      removed: all ? undefined : false,
+    });
 
     Response.success(res, todoList);
   } catch (e) {
@@ -55,7 +64,16 @@ export async function handleEditTodo(req: TReq, res: TRes) {
     const { id } = req.params;
     const { title, description, category } = req.body;
 
-    await TodoListModel.findById(id).update({ title, description, category });
+    await TodoListModel.updateOne(
+      { _id: id },
+      {
+        $set: {
+          title,
+          description,
+          category,
+        },
+      },
+    );
     const updatedTodoList = await getTodoList({ removed: false });
 
     Response.success(res, updatedTodoList);
@@ -68,7 +86,14 @@ export async function handleRemoveTodo(req: TReq, res: TRes) {
   try {
     const { id } = req.params;
 
-    await TodoListModel.findById(id).update({ removed: true });
+    await TodoListModel.updateOne(
+      { _id: id },
+      {
+        $set: {
+          removed: true,
+        },
+      },
+    );
     const updatedTodoList = await getTodoList({ removed: false });
 
     Response.success(res, updatedTodoList);

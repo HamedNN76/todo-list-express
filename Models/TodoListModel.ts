@@ -32,7 +32,7 @@ const TodoListModel = mongoose.model<ITodoListModel>(
 export interface ITodoList {
   title: string;
   description: string;
-  category: boolean;
+  category: number;
   removed: boolean;
 }
 export interface ITodoListModel extends Document, ITodoList {}
